@@ -188,17 +188,35 @@ def sync_shipments(client, catalog, state, start_date):
 
     set_bookmark(state, stream_id, max_datetime)
 
+def should_sync_stream(last_stream, selected_streams, stream_name):
+    if last_stream == stream_name or \
+       (last_stream is None and stream_name in selected_streams):
+        return True
+    return False
+
+def set_current_stream(state, stream_name):
+    state['current_stream'] = stream_name
+    singer.write_state(state)
+
 def sync(client, catalog, state, start_date):
     selected_streams = get_selected_streams(catalog)
 
-    if 'products' in selected_streams:
+    last_stream = state.get('current_stream')
+
+    if should_sync_stream(last_stream, selected_streams, 'products'):
+        set_current_stream(state, 'products')
         sync_products(client, catalog, state, start_date)
 
-    if 'orders' in selected_streams:
-        sync_orders(client, catalog, state, start_date)
-
-    if 'vendors' in selected_streams:
+    if should_sync_stream(last_stream, selected_streams, 'vendors'):
+        set_current_stream(state, 'vendors')
         sync_vendors(client, catalog)
 
-    if 'shipments' in selected_streams:
+    if should_sync_stream(last_stream, selected_streams, 'orders'):
+        set_current_stream(state, 'orders')
+        sync_orders(client, catalog, state, start_date)
+
+    if should_sync_stream(last_stream, selected_streams, 'shipments'):
+        set_current_stream(state, 'shipments')
         sync_shipments(client, catalog, state, start_date)
+
+    set_current_stream(state, None)

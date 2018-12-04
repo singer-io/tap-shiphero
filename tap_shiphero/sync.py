@@ -72,6 +72,7 @@ def sync_products(client, catalog, state, start_date):
     num_results = None
     max_datetime = last_date
     while is_next_page(limit, num_results):
+        LOGGER.info('Sycing products - page {}'.format(page))
         data = client.get(
             '/get-product/',
             params={
@@ -97,48 +98,64 @@ def sync_products(client, catalog, state, start_date):
 
         set_bookmark(state, stream_id, max_datetime)
 
-def sync_orders(client, catalog, state, start_date):
+def sync_orders(client, catalog, state, start_date, end_date):
     stream_id = 'orders'
 
     write_schema(catalog, stream_id)
 
     last_date = get_bookmark(state, stream_id, start_date)
 
-    page = 1
+    if end_date:
+        end_date = pendulum.parse(end_date)
+    else:
+        end_date = pendulum.now('UTC')
+
+    updated_from = pendulum.parse(last_date)
+
+    if updated_from > end_date:
+        raise Exception('Orders start_date is greater than end_date')
+
     limit = 100
-    num_results = None
-    max_datetime = last_date
-    while is_next_page(limit, num_results):
-        data = client.get(
-            '/get-orders/',
-            params={
-                'updated_from': pendulum.parse(last_date).to_date_string(),
-                'updated_to': pendulum.now('UTC').to_date_string(),
-                'page': page,
-                'sort': 'updated',
-                'sort_direction': 'asc',
-                'all_orders': 1
-            },
-            endpoint=stream_id)
-        page += 1
+    while updated_from < end_date:
+        page = 1
+        num_results = None
+        updated_to = updated_from.add(days=1)
+        while is_next_page(limit, num_results):
+            LOGGER.info('Sycing orders from: {} to: {} - page {}'.format(
+                updated_from.to_date_string(),
+                updated_to.to_date_string(),
+                page))
+            data = client.get(
+                '/get-orders/',
+                params={
+                    'updated_from': updated_from.to_date_string(),
+                    'updated_to': updated_to.to_date_string(),
+                    'page': page,
+                    'sort': 'updated',
+                    'sort_direction': 'asc',
+                    'all_orders': 1
+                },
+                endpoint=stream_id)
 
-        records = data['results']
+            records = data.get('results', [])
+            if records == 'Order not found':
+                num_results = 0
+            else:
+                num_results = len(records)
 
-        if records:
-            num_results = len(records)
+            if num_results > 0:
+                if num_results == limit:
+                    page += 1
 
-            max_page_datetime = max(map(lambda x: x['updated_at'], records))
-            if max_page_datetime > max_datetime:
-                max_datetime = max_page_datetime
-
-            persist_records(catalog, stream_id, records)
-        else:
-            num_results = 0
-
-        set_bookmark(state, stream_id, max_datetime)
+                persist_records(catalog, stream_id, records)
+        
+        set_bookmark(state, stream_id, updated_from.isoformat())
+        updated_from = updated_to
 
 def sync_vendors(client, catalog):
     stream_id = 'vendors'
+
+    LOGGER.info('Sycing all vendors')
 
     write_schema(catalog, stream_id)
 
@@ -150,43 +167,59 @@ def sync_vendors(client, catalog):
 
     persist_records(catalog, stream_id, records)
 
-def sync_shipments(client, catalog, state, start_date):
+def sync_shipments(client, catalog, state, start_date, end_date):
     stream_id = 'shipments'
 
     write_schema(catalog, stream_id)
 
-    last_date_raw = get_bookmark(state, stream_id, start_date)
-    last_date = pendulum.parse(last_date_raw).to_date_string()
+    last_date = get_bookmark(state, stream_id, start_date)
 
-    page = 1
+    if end_date:
+        end_date = pendulum.parse(end_date)
+    else:
+        end_date = pendulum.now('UTC')
+
+    updated_from = pendulum.parse(last_date)
+
+    if updated_from > end_date:
+        raise Exception('Shipments start_date is greater than end_date')
+
     limit = 100
-    num_results = None
-    max_datetime = last_date
-    while is_next_page(limit, num_results):
-        data = client.get(
-            '/get-shipments/',
-            params={
-                'from': last_date,
-                'to': pendulum.now('UTC').to_date_string(),
-                'page': page,
-                'filter_on': 'shipment',
-                'all_orders': 1
-            },
-            endpoint=stream_id)
-        page += 1
+    while updated_from < end_date:
+        page = 1
+        num_results = None
+        updated_to = updated_from.add(days=1)
+        while is_next_page(limit, num_results):
+            LOGGER.info('Sycing shipments from: {} to: {} - page {}'.format(
+                updated_from.to_date_string(),
+                updated_to.to_date_string(),
+                page))
+            data = client.get(
+                '/get-shipments/',
+                params={
+                    'from': updated_from.to_date_string(),
+                    'to': updated_to.to_date_string(),
+                    'page': page,
+                    'filter_on': 'shipment',
+                    'all_orders': 1
+                },
+                endpoint=stream_id)
 
-        raw_shipments = data.get('orders', {}).get('results', {})
-        records = []
-        for shipment_id, shipment in raw_shipments.items():
-            records.append({'shipment_id': shipment_id, **shipment})
-            if shipment['date'] > max_datetime:
-                max_datetime = shipment['date']
+            raw_shipments = data.get('orders', {}).get('results', {})
+            records = []
+            for shipment_id, shipment in raw_shipments.items():
+                records.append({'shipment_id': shipment_id, **shipment})
 
-        num_results = len(records)
+            num_results = len(records)
 
-        persist_records(catalog, stream_id, records)
+            if num_results > 0:
+                if num_results == limit:
+                    page += 1
 
-    set_bookmark(state, stream_id, max_datetime)
+                persist_records(catalog, stream_id, records)
+        
+        set_bookmark(state, stream_id, updated_from.isoformat())
+        updated_from = updated_to
 
 def should_sync_stream(last_stream, selected_streams, stream_name):
     if last_stream == stream_name or \
@@ -198,7 +231,7 @@ def set_current_stream(state, stream_name):
     state['current_stream'] = stream_name
     singer.write_state(state)
 
-def sync(client, catalog, state, start_date):
+def sync(client, catalog, state, start_date, end_date):
     selected_streams = get_selected_streams(catalog)
 
     last_stream = state.get('current_stream')
@@ -213,10 +246,10 @@ def sync(client, catalog, state, start_date):
 
     if should_sync_stream(last_stream, selected_streams, 'orders'):
         set_current_stream(state, 'orders')
-        sync_orders(client, catalog, state, start_date)
+        sync_orders(client, catalog, state, start_date, end_date)
 
     if should_sync_stream(last_stream, selected_streams, 'shipments'):
         set_current_stream(state, 'shipments')
-        sync_shipments(client, catalog, state, start_date)
+        sync_shipments(client, catalog, state, start_date, end_date)
 
     set_current_stream(state, None)

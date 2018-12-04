@@ -82,8 +82,6 @@ def sync_products(client, catalog, state, start_date):
             if max_page_datetime > max_datetime:
                 max_datetime = max_page_datetime
 
-            print(records)
-
             persist_records(catalog, stream_id, records)
         else:
             num_results = 0
@@ -177,8 +175,6 @@ def sync_shipments(client, catalog, state, start_date):
 
         num_results = len(records)
 
-        print(records)
-
         persist_records(catalog, stream_id, records)
 
     set_bookmark(state, stream_id, max_datetime)
@@ -197,4 +193,5 @@ def sync(client, catalog, state, start_date):
     if 'vendors' in selected_streams:
         sync_vendors(client, catalog)
 
-    sync_shipments(client, catalog, state, start_date)
+    if 'shipments' in selected_streams:
+        sync_shipments(client, catalog, state, start_date)

@@ -6,6 +6,8 @@ from tap_shiphero.discover import PKS
 
 LOGGER = singer.get_logger()
 
+DEPRECATED_PRODUCT_FIELDS = ['customs_value', 'value_currency', 'price', 'value']
+
 def write_schema(catalog, stream_id):
     stream = catalog.get_stream(stream_id)
     schema = stream.schema.to_dict()
@@ -58,6 +60,13 @@ def sync_products(client, catalog, state, start_date):
 
     last_date = get_bookmark(state, stream_id, start_date)
 
+    def products_transform(record):
+        out = {}
+        for key, value in record.items():
+            if key not in DEPRECATED_PRODUCT_FIELDS:
+                out[key] = value
+        return out
+
     page = 1
     limit = 200
     num_results = None
@@ -82,7 +91,7 @@ def sync_products(client, catalog, state, start_date):
             if max_page_datetime > max_datetime:
                 max_datetime = max_page_datetime
 
-            persist_records(catalog, stream_id, records)
+            persist_records(catalog, stream_id, map(products_transform, records))
         else:
             num_results = 0
 
@@ -144,7 +153,7 @@ def sync_vendors(client, catalog):
 def sync_shipments(client, catalog, state, start_date):
     stream_id = 'shipments'
 
-    # write_schema(catalog, stream_id)
+    write_schema(catalog, stream_id)
 
     last_date_raw = get_bookmark(state, stream_id, start_date)
     last_date = pendulum.parse(last_date_raw).to_date_string()
@@ -181,8 +190,6 @@ def sync_shipments(client, catalog, state, start_date):
 
 def sync(client, catalog, state, start_date):
     selected_streams = get_selected_streams(catalog)
-
-    ## TODO: Do not include customs_value, value_currency, price, value in the product object schema but keep them in the warehouse object schema.
 
     if 'products' in selected_streams:
         sync_products(client, catalog, state, start_date)

@@ -1,0 +1,90 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "shipment_id": {
+      "type": "string"
+    },
+    "order_id": {
+      "type": "string"
+    },
+    "order_number": {
+      "type": "string"
+    },
+    "shipping_name": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "carrier": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "line_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "line_item_id": {
+            "type": "string"
+          },
+          "partner_line_item_id": {
+            "type": "string"
+          },
+          "shipment_line_item_id": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "order": {
+      "type": "object",
+      "properties": {
+      }
+    },
+    "warehouse": {
+      "type": "string"
+    },
+    "method": {
+      "type": "string"
+    },
+    "tracking": {
+      "type": "string"
+    },
+    "height": {
+      "type": "number"
+    },
+    "weight": {
+      "type": "number"
+    },
+    "width": {
+      "type": "number"
+    },
+    "label_cost": {
+      "type": "number"
+    },
+    "length": {
+      "type": "number"
+    },
+    "shipper_id": {
+      "type": "string"
+    },
+    "shipper_email": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    }
+  }
+}

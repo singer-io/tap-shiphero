@@ -1,0 +1,27 @@
+#!/usr/bin/env python
+
+from setuptools import setup
+from setuptools import find_packages
+
+setup(
+    name='tap-shiphero',
+    version='0.0.1',
+    classifiers=['Programming Language :: Python :: 3 :: Only'],
+    py_modules=['tap_shiphero'],
+    install_requires=[
+        'backoff==1.3.2',
+        'ratelimit==2.2.0',
+        'requests==2.20.1',
+        'pendulum==2.0.3',
+        'singer-python==5.2.0'
+    ],
+    entry_points='''
+      [console_scripts]
+      tap-shiphero=tap_shiphero:main
+    ''',
+    packages=find_packages(),
+    include_package_data=True,
+    package_data = {
+        "schemas": ["tap_shiphero/schemas/*.json"]
+    }
+)

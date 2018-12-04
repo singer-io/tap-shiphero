@@ -1,0 +1,545 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "integer"
+    },
+    "payment_method": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "hold_shipment_until": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "adult_signature_required": {
+      "type": "integer"
+    },
+    "has_dry_ice": {
+      "type": "integer"
+    },
+    "shipping_price": {
+      "type": "number"
+    },
+    "shop_name": {
+      "type": "string"
+    },
+    "source": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "order_history": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "username": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "information": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    "billing_address": {
+      "type": [
+        "null",
+        "object"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "province": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "city": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "first_name": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "last_name": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "zip": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "country": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "address1": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "company": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "address2": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "phone": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      }
+    },
+    "account_id": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "required_ship_date": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "partner_order_id": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "require_signature": {
+      "type": "integer"
+    },
+    "gift_invoice": {
+      "type": "integer"
+    },
+    "line_items": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "updated_at": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "created_at": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "option_title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "customs_value": {
+            "type": "string"
+          },
+          "backorder_quantity": {
+            "type": "integer"
+          },
+          "sku": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "locked_to_warehouse_id": {
+            "type": [
+              "null",
+              "integer"
+            ]
+          },
+          "warehouse": {
+            "type": "string"
+          },
+          "thumbnail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "price": {
+            "type": "string"
+          },
+          "barcode": {
+            "type": "string"
+          },
+          "warehouse_id": {
+            "type": "integer"
+          },
+          "eligible_for_return": {
+            "type": "integer"
+          },
+          "custom_options": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "subtotal": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "large_thumbnail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "partner_line_item_id": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "quantity_allocated": {
+            "type": "integer"
+          },
+          "quantity_pending_fulfillment": {
+            "type": "integer"
+          },
+          "fulfillment_status": {
+            "type": "string"
+          },
+          "product_id": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "quantity": {
+            "type": "integer"
+          },
+          "custom_barcode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "quantity_shipped": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "total_price": {
+      "type": "string"
+    },
+    "insurance_amount": {
+      "type": "integer"
+    },
+    "expected_weight_in_oz": {
+      "type": "number"
+    },
+    "shipping_address": {
+      "type": [
+        "null",
+        "object"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "province": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "last_name": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "address1": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "company": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "phone": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "city": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "first_name": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "zip": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "country": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "email": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "address2": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      }
+    },
+    "allow_split": {
+      "type": "integer"
+    },
+    "fraudscore_details": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "priority_flag": {
+      "type": "integer"
+    },
+    "shipping_lines": {
+      "type": [
+        "null",
+        "object"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "carrier": {
+          "type": "string"
+        },
+        "method": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        }
+      }
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "gift_note": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "currency": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "invoice": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "packing_note": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "lock_data": {
+      "type": "object",
+      "properties": {
+      }
+    },
+    "ignore_address_validation_errors": {
+      "type": "integer"
+    },
+    "alcohol": {
+      "type": "integer"
+    },
+    "allocation_priority": {
+      "type": "integer"
+    },
+    "holds": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "operator": {
+          "type": "integer"
+        },
+        "fraud": {
+          "type": "integer"
+        },
+        "shipping_method": {
+          "type": "integer"
+        },
+        "payment": {
+          "type": "integer"
+        },
+        "address": {
+          "type": "integer"
+        }
+      }
+    },
+    "requested_delivery_at": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "insurance": {
+      "type": "integer"
+    },
+    "fraudscore": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "allow_partial": {
+      "type": "integer"
+    },
+    "profile": {
+      "type": "string"
+    },
+    "total_tax": {
+      "type": "string"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "discount": {
+      "type": "string"
+    },
+    "order_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "subtotal": {
+      "type": "string"
+    },
+    "saturday_delivery": {
+      "type": "integer"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "flagged": {
+      "type": "integer"
+    },
+    "fulfillment_status": {
+      "type": "string"
+    },
+    "third_party_shipper": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "country": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "account_number": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "zip": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      }
+    },
+    "order_number": {
+      "type": "string"
+    }
+  }
+}

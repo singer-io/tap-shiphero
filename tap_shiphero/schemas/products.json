@@ -69,7 +69,14 @@
       "type": "array",
       "items": {
         "type": "object",
+        "additionalProperties": false,
         "properties": {
+          "quantity": {
+            "type": "integer"
+          },
+          "sku": {
+            "type": "string"
+          }
         }
       }
     },
@@ -128,7 +135,24 @@
             "type": "array",
             "items": {
               "type": "object",
+              "additionalProperties": false,
               "properties": {
+                "expected_date": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "po_id": {
+                  "type": "string"
+                },
+                "quantity": {
+                  "type": "integer"
+                },
+                "quantity_received": {
+                  "type": "integer"
+                },
+                "sell_ahead": {
+                  "type": "integer"
+                }
               }
             }
           },

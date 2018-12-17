@@ -55,7 +55,7 @@ def get_selected_streams(catalog):
 def is_next_page(limit, num_results):
     return num_results is None or num_results == limit
 
-def sync_products(client, catalog, state, start_date):
+def sync_products(client, catalog, state, start_date, end_date):
     stream_id = 'products'
 
     write_schema(catalog, stream_id)
@@ -156,7 +156,7 @@ def sync_orders(client, catalog, state, start_date, end_date):
         set_bookmark(state, stream_id, updated_from.isoformat())
         updated_from = updated_to
 
-def sync_vendors(client, catalog):
+def sync_vendors(client, catalog, state, start_date, end_date):
     stream_id = 'vendors'
 
     LOGGER.info('Sycing all vendors')
@@ -238,22 +238,19 @@ def set_current_stream(state, stream_name):
 def sync(client, catalog, state, start_date, end_date):
     selected_streams = get_selected_streams(catalog)
 
+    streams = {
+        'products': sync_products,
+        'vendors': sync_vendors,
+        'orders': sync_orders,
+        'shipments': sync_shipments
+    }
+
     last_stream = state.get('current_stream')
 
-    if should_sync_stream(last_stream, selected_streams, 'products'):
-        set_current_stream(state, 'products')
-        sync_products(client, catalog, state, start_date)
-
-    if should_sync_stream(last_stream, selected_streams, 'vendors'):
-        set_current_stream(state, 'vendors')
-        sync_vendors(client, catalog)
-
-    if should_sync_stream(last_stream, selected_streams, 'orders'):
-        set_current_stream(state, 'orders')
-        sync_orders(client, catalog, state, start_date, end_date)
-
-    if should_sync_stream(last_stream, selected_streams, 'shipments'):
-        set_current_stream(state, 'shipments')
-        sync_shipments(client, catalog, state, start_date, end_date)
+    for stream_id, sync_fn in streams.items():
+        if should_sync_stream(last_stream, selected_streams, stream_id):
+            last_stream = None
+            set_current_stream(state, stream_id)
+            sync_fn(client, catalog, state, start_date, end_date)
 
     set_current_stream(state, None)

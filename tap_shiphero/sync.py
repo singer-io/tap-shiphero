@@ -1,6 +1,8 @@
-import pendulum
+from datetime import datetime, timedelta
+
 import singer
 from singer import metrics, metadata, Transformer
+from singer.utils import strptime_to_utc, strftime, now
 
 from tap_shiphero.discover import PKS
 
@@ -73,10 +75,12 @@ def sync_products(client, catalog, state, start_date):
     max_datetime = last_date
     while is_next_page(limit, num_results):
         LOGGER.info('Sycing products - page {}'.format(page))
+
+        updated_min = strptime_to_utc('2018-01-01 00:00:00').strftime('%Y-%m-%d')
         data = client.get(
             '/get-product/',
             params={
-                'updated_at_min': pendulum.parse(last_date).to_datetime_string(),
+                'updated_at_min': updated_min,
                 'page': page,
                 'count': limit
             },
@@ -106,11 +110,11 @@ def sync_orders(client, catalog, state, start_date, end_date):
     last_date = get_bookmark(state, stream_id, start_date)
 
     if end_date:
-        end_date = pendulum.parse(end_date)
+        end_date = strptime_to_utc(end_date)
     else:
-        end_date = pendulum.now('UTC')
+        end_date = now()
 
-    updated_from = pendulum.parse(last_date)
+    updated_from = strptime_to_utc(last_date)
 
     if updated_from > end_date:
         raise Exception('Orders start_date is greater than end_date')
@@ -119,17 +123,17 @@ def sync_orders(client, catalog, state, start_date, end_date):
     while updated_from < end_date:
         page = 1
         num_results = None
-        updated_to = updated_from.add(days=1)
+        updated_to = updated_from + timedelta(days=1)
         while is_next_page(limit, num_results):
             LOGGER.info('Sycing orders from: {} to: {} - page {}'.format(
-                updated_from.to_date_string(),
-                updated_to.to_date_string(),
+                updated_from.strftime('%Y-%m-%d'),
+                updated_to.strftime('%Y-%m-%d'),
                 page))
             data = client.get(
                 '/get-orders/',
                 params={
-                    'updated_from': updated_from.to_date_string(),
-                    'updated_to': updated_to.to_date_string(),
+                    'updated_from': updated_from.strftime('%Y-%m-%d'),
+                    'updated_to': updated_to.strftime('%Y-%m-%d'),
                     'page': page,
                     'sort': 'updated',
                     'sort_direction': 'asc',
@@ -175,11 +179,11 @@ def sync_shipments(client, catalog, state, start_date, end_date):
     last_date = get_bookmark(state, stream_id, start_date)
 
     if end_date:
-        end_date = pendulum.parse(end_date)
+        end_date = strptime_to_utc(end_date)
     else:
-        end_date = pendulum.now('UTC')
+        end_date = now()
 
-    updated_from = pendulum.parse(last_date)
+    updated_from = strptime_to_utc(last_date)
 
     if updated_from > end_date:
         raise Exception('Shipments start_date is greater than end_date')
@@ -188,17 +192,17 @@ def sync_shipments(client, catalog, state, start_date, end_date):
     while updated_from < end_date:
         page = 1
         num_results = None
-        updated_to = updated_from.add(days=1)
+        updated_to = updated_from + timedelta(days=1)
         while is_next_page(limit, num_results):
             LOGGER.info('Sycing shipments from: {} to: {} - page {}'.format(
-                updated_from.to_date_string(),
-                updated_to.to_date_string(),
+                updated_from.strftime('%Y-%m-%d'),
+                updated_to.strftime('%Y-%m-%d'),
                 page))
             data = client.get(
                 '/get-shipments/',
                 params={
-                    'from': updated_from.to_date_string(),
-                    'to': updated_to.to_date_string(),
+                    'from': updated_from.strftime('%Y-%m-%d'),
+                    'to': updated_to.strftime('%Y-%m-%d'),
                     'page': page,
                     'filter_on': 'shipment',
                     'all_orders': 1

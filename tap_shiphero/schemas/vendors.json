@@ -3,10 +3,16 @@
   "additionalProperties": false,
   "properties": {
     "vendor_id": {
-      "type": "integer"
+      "type": [
+        "null",
+        "integer"
+      ]
     },
     "name": {
-      "type": "string"
+      "type": [
+        "null",
+        "string"
+      ]
     }
   }
 }

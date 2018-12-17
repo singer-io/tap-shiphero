@@ -34,7 +34,7 @@ def get_schemas():
     file_names = sorted(file_names)
 
     for file_name in file_names:
-        if file_name[-5:] == '.json':
+        if file_name.endswith('.json'):
             stream_name = file_name[:-5]
             with open(os.path.join(schemas_path, file_name)) as data_file:
                 schema = json.load(data_file)
@@ -42,15 +42,6 @@ def get_schemas():
             SCHEMAS[stream_name] = schema
             pk = PKS[stream_name]
             metadata = []
-
-            if stream_name == 'shipments':
-                schema['properties']['orders'] = SCHEMAS['orders']
-                orders_meta = deepcopy(FIELD_METADATA['orders'])
-
-                for item in orders_meta:
-                    item['breadcrumb'] = ['properties', 'orders'] + item['breadcrumb']
-
-                metadata += orders_meta
 
             for prop, json_schema in schema['properties'].items():
                 if prop in pk:

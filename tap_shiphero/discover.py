@@ -3,6 +3,7 @@ import json
 from copy import deepcopy
 
 from singer.catalog import Catalog, CatalogEntry, Schema
+from singer import metadata
 
 SCHEMAS = None
 FIELD_METADATA = None
@@ -41,21 +42,21 @@ def get_schemas():
 
             SCHEMAS[stream_name] = schema
             pk = PKS[stream_name]
-            metadata = []
+            schema_metadata = metadata.new()
 
             for prop, json_schema in schema['properties'].items():
                 if prop in pk:
                     inclusion = 'automatic'
                 else:
                     inclusion = 'available'
-                metadata.append({
-                    'metadata': {
-                        'inclusion': inclusion
-                    },
-                    'breadcrumb': ['properties', prop]
-                })
+                schema_metadata = metadata.write(
+                    schema_metadata,
+                    ('properties', prop),
+                    'inclusion',
+                    inclusion
+                )
 
-            FIELD_METADATA[stream_name] = metadata
+            FIELD_METADATA[stream_name] = metadata.to_list(schema_metadata)
 
     return SCHEMAS, FIELD_METADATA
 

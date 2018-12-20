@@ -6,6 +6,9 @@ from setuptools import find_packages
 setup(
     name='tap-shiphero',
     version='0.0.1',
+    description="Singer.io tap for extracting Shiphero data",
+    author="Stitch",
+    url="http://singer.io",
     classifiers=['Programming Language :: Python :: 3 :: Only'],
     py_modules=['tap_shiphero'],
     install_requires=[

@@ -105,7 +105,7 @@ def sync_products(client, catalog, state, start_date, end_date, stream_id, strea
 def sync_vendors(client, catalog, state, start_date, end_date, stream_id, stream_config):
     stream_id = 'vendors'
 
-    LOGGER.info('Sycing all vendors')
+    LOGGER.info('Syncing all vendors')
 
     write_schema(catalog, stream_id)
 
@@ -142,7 +142,7 @@ def sync_daily(client, catalog, state, start_date, end_date, stream_id, stream_c
         updated_from_str = updated_from.strftime('%Y-%m-%d')
         updated_to_str = updated_to.strftime('%Y-%m-%d')
         while is_next_page(limit, num_results):
-            LOGGER.info('Sycing {} from: {} to: {} - page {}'.format(
+            LOGGER.info('Syncing {} from: {} to: {} - page {}'.format(
                 stream_id,
                 updated_from_str,
                 updated_to_str,

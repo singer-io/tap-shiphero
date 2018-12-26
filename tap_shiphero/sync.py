@@ -168,7 +168,7 @@ def sync_daily(client, catalog, state, start_date, end_date, stream_id, stream_c
 
                 persist_records(catalog, stream_id, records)
         
-        set_bookmark(state, stream_id, updated_from.isoformat())
+        set_bookmark(state, stream_id, updated_to.isoformat())
         updated_from = updated_to
 
 def order_get_records(data):

@@ -23,8 +23,8 @@ class ShipHeroClient(object):
         self.__session.close()
 
     @backoff.on_exception(backoff.expo,
-                          [Server5xxError,
-                           RateLimitException],
+                          (Server5xxError,
+                           RateLimitException),
                           max_tries=5,
                           factor=2)
     @sleep_and_retry

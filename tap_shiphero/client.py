@@ -27,7 +27,8 @@ class ShipHeroClient(object):
                           (Server5xxError,
                            RateLimitException,
                            exceptions.Timeout,
-                           exceptions.ConnectionError),
+                           exceptions.ConnectionError,
+                           exceptions.ChunkedEncodingError),
                           max_tries=5,
                           factor=2)
     @sleep_and_retry

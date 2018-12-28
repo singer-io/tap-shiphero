@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 
 import backoff
 import requests
+from requests import exceptions
 from singer import metrics
 from ratelimit import limits, RateLimitException, sleep_and_retry
 
@@ -23,8 +24,11 @@ class ShipHeroClient(object):
         self.__session.close()
 
     @backoff.on_exception(backoff.expo,
-                          [Server5xxError,
-                           RateLimitException],
+                          (Server5xxError,
+                           RateLimitException,
+                           exceptions.Timeout,
+                           exceptions.ConnectionError,
+                           exceptions.ChunkedEncodingError),
                           max_tries=5,
                           factor=2)
     @sleep_and_retry

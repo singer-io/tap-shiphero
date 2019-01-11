@@ -76,7 +76,7 @@ def sync_products(client, catalog, state, start_date, end_date, stream_id, strea
     while is_next_page(limit, num_results):
         LOGGER.info('Sycing products - page {}'.format(page))
 
-        updated_min = strptime_to_utc('2018-01-01 00:00:00').strftime('%Y-%m-%d')
+        updated_min = strptime_to_utc(last_date).strftime('%Y-%m-%d')
         data = client.get(
             '/get-product/',
             params={
@@ -167,8 +167,12 @@ def sync_daily(client, catalog, state, start_date, end_date, stream_id, stream_c
                     page += 1
 
                 persist_records(catalog, stream_id, records)
-        
-        set_bookmark(state, stream_id, updated_to.isoformat())
+
+        bookmark_date = updated_to
+        if bookmark_date > now():
+            bookmark_date = now()
+        set_bookmark(state, stream_id, bookmark_date.isoformat())
+
         updated_from = updated_to
 
 def order_get_records(data):

@@ -11,13 +11,13 @@
     "final_sale": {
       "type": [
         "null",
-        "boolean"
+        "integer"
       ]
     },
     "ignore_on_invoice": {
       "type": [
         "null",
-        "boolean"
+        "integer"
       ]
     },
     "reserve_inventory": {
@@ -41,7 +41,7 @@
     "dropship": {
       "type": [
         "null",
-        "boolean"
+        "integer"
       ]
     },
     "updated_at": {
@@ -66,7 +66,7 @@
     "kit_build": {
       "type": [
         "null",
-        "boolean"
+        "integer"
       ]
     },
     "value_currency": {
@@ -149,7 +149,7 @@
     "active": {
       "type": [
         "null",
-        "boolean"
+        "integer"
       ]
     },
     "tariff_code": {
@@ -161,7 +161,7 @@
     "kit": {
       "type": [
         "null",
-        "boolean"
+        "integer"
       ]
     },
     "option": {
@@ -179,7 +179,7 @@
     "no_air": {
       "type": [
         "null",
-        "boolean"
+        "integer"
       ]
     },
     "name": {
@@ -207,6 +207,12 @@
             "type": [
               "null",
               "integer"
+            ]
+          },
+          "active": {
+            "type": [
+              "null",
+              "number"
             ]
           },
           "available": {
@@ -279,7 +285,7 @@
           "allocated": {
             "type": [
               "null",
-              "boolean"
+              "integer"
             ]
           },
           "value_currency": {
@@ -348,7 +354,7 @@
     "do_not_count": {
       "type": [
         "null",
-        "boolean"
+        "integer"
       ]
     },
     "created_at": {
@@ -379,13 +385,13 @@
     "virtual": {
       "type": [
         "null",
-        "boolean"
+        "integer"
       ]
     },
     "custom": {
       "type": [
         "null",
-        "boolean"
+        "integer"
       ]
     },
     "width": {
@@ -403,7 +409,7 @@
     "ignore_on_customs": {
       "type": [
         "null",
-        "boolean"
+        "integer"
       ]
     },
     "weight_in_oz": {

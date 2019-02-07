@@ -13,6 +13,12 @@
         "null",
         "string"
       ]
+    },
+    "email": {
+      "type": [
+        "null",
+        "string"
+      ]
     }
   }
 }

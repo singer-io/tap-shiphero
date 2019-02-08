@@ -41,7 +41,7 @@
     "dropship": {
       "type": [
         "null",
-        "boolean"
+        "integer"
       ]
     },
     "updated_at": {
@@ -209,6 +209,12 @@
               "integer"
             ]
           },
+          "active": {
+            "type": [
+              "null",
+              "number"
+            ]
+          },
           "available": {
             "type": [
               "null",
@@ -279,7 +285,7 @@
           "allocated": {
             "type": [
               "null",
-              "boolean"
+              "integer"
             ]
           },
           "value_currency": {
@@ -385,7 +391,7 @@
     "custom": {
       "type": [
         "null",
-        "boolean"
+        "integer"
       ]
     },
     "width": {

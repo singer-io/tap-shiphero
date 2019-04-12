@@ -195,7 +195,7 @@ def sync_daily(client, catalog, state, start_date, end_date, stream_id, stream_c
     # Extract params from config
     path = stream_config['path']
     params = stream_config.get('params', {})
-    from_col = stream_config['form_col']
+    from_col = stream_config['from_col']
     to_col = stream_config['to_col']
     records_fn = stream_config['get_records']
 

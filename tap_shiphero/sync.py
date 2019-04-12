@@ -117,63 +117,91 @@ def sync_vendors(client, catalog, state, start_date, end_date, stream_id, stream
 
     persist_records(catalog, stream_id, records)
 
+def sync_a_day(stream_id, path, params, start_ymd, end_ymd, func_get_records, client, catalog):
+    """
+    Loop Guide
+    1. Make the API call
+    2. Process the response to get a list of records
+    3. Persist the records
+    4. Update the call parameters
+    When the conditional becomes invalid log a message that we are done
+
+    The length of the response seems to vary, but once we get back an
+    empty response, it seems that we have requested all objects. Do not
+    trust the `total` field on the response, it has varied from the
+    actual total by O(10).
+    """
+    page = 1
+    params['page'] = page
+
+    # This is a non-empty list to start so we can enter the loop
+    records = ['Initialize records']
+
+    while len(records) > 0:
+        LOGGER.info('Syncing %s from: %s to: %s - page %s',
+                    stream_id,
+                    start_ymd,
+                    end_ymd,
+                    page)
+        data = client.get(path, params=params, endpoint=stream_id)
+        records = func_get_records(data)
+        persist_records(catalog, stream_id, records)
+
+        page += 1
+        params['page'] = page
+    else:
+        LOGGER.info('Empty response from endpoint %s, '
+                    'aborting further pagination.', stream_id)
+
 def sync_daily(client, catalog, state, start_date, end_date, stream_id, stream_config):
+    """Syncs a given date range, bookmarking after each day.
+
+    Argument Types:
+      client: [ShipHeroClient]
+      catalog: [Dictionary]
+      state: [Dictionary]
+      start_date: [String, UTC datetime]
+      end_date: Optional, non-inclusive day [String, UTC datetime]
+      stream_id: [String]
+      stream_config: [Dictionary]
+    """
     write_schema(catalog, stream_id)
 
-    last_date = get_bookmark(state, stream_id, start_date)
+    # Set up datetime versions of the start_date, end_date
+    start_date_dt = strptime_to_utc(get_bookmark(state, stream_id, start_date))
+
+    # Since end_date is optional in the top level sync
+    if end_date:
+        end_date_dt = strptime_to_utc(end_date)
+    else:
+        end_date_dt = now()
+
+    if start_date_dt > end_date_dt:
+        raise Exception('{} start_date is greater than end_date'.format(stream_id))
+
+    # Pull config variables out of stream_config
     path = stream_config['path']
     params = stream_config.get('params', {})
 
-    if end_date:
-        end_date = strptime_to_utc(end_date)
-    else:
-        end_date = now()
+    while start_date_dt < end_date_dt:
+        window_end = start_date_dt + timedelta(days=1)
 
-    updated_from = strptime_to_utc(last_date)
+        # The API expects the dates in %Y-%m-%d
+        start_ymd = start_date_dt.strftime('%Y-%m-%d')
+        end_ymd = window_end.strftime('%Y-%m-%d')
 
-    if updated_from > end_date:
-        raise Exception('{} start_date is greater than end_date'.format(stream_id))
+        params.update({stream_config['from_col'] : start_ymd,
+                       stream_config['to_col'] : end_ymd})
 
-    limit = 100
-    while updated_from < end_date:
-        page = 1
-        num_results = None
-        updated_to = updated_from + timedelta(days=1)
-        updated_from_str = updated_from.strftime('%Y-%m-%d')
-        updated_to_str = updated_to.strftime('%Y-%m-%d')
-        while is_next_page(limit, num_results):
-            LOGGER.info('Syncing {} from: {} to: {} - page {}'.format(
-                stream_id,
-                updated_from_str,
-                updated_to_str,
-                page))
+        sync_a_day(stream_id, path, params, start_ymd, end_ymd,
+                   stream_config['get_records'], client, catalog)
 
-            params[stream_config['from_col']] = updated_from_str
-            params[stream_config['to_col']] = updated_to_str
+        date_to_bookmark = window_end
+        if date_to_bookmark > now():
+            date_to_bookmark = now()
+        set_bookmark(state, stream_id, date_to_bookmark.isoformat())
 
-            params['page'] = page
-
-            data = client.get(
-                path,
-                params=params,
-                endpoint=stream_id)
-
-            records = stream_config['get_records'](data)
-
-            num_results = len(records)
-
-            if num_results > 0:
-                if num_results == limit:
-                    page += 1
-
-                persist_records(catalog, stream_id, records)
-
-        bookmark_date = updated_to
-        if bookmark_date > now():
-            bookmark_date = now()
-        set_bookmark(state, stream_id, bookmark_date.isoformat())
-
-        updated_from = updated_to
+        start_date_dt = date_to_bookmark
 
 def order_get_records(data):
     records = data.get('results', [])

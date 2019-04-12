@@ -133,7 +133,9 @@ def sync_a_day(stream_id, path, params, start_ymd, end_ymd,
     The length of the response can vary, but once we get back an empty
     response, it seems that we have requested all objects. Do not trust
     the `total` field on the response, it has varied from the actual total
-    by O(10). The path to the object is response.json()['orders']['total'].
+    by O(10). The path to that field is response.json()['orders']['total'],
+    where the response is in the request function in `client.py`.
+>>>>>>> Stashed changes
     """
     page = 1
 

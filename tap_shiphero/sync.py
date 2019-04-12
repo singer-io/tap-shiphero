@@ -132,10 +132,8 @@ def sync_a_day(stream_id, path, params, start_ymd, end_ymd,
 
     The length of the response can vary, but once we get back an empty
     response, it seems that we have requested all objects. Do not trust
-    # FIXME Please document the actual path in the response here
     the `total` field on the response, it has varied from the actual total
-    by O(10).
-
+    by O(10). The path to the object is response.json()['orders']['total'].
     """
     page = 1
 

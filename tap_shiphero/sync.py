@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import singer
 from singer import metrics, metadata, Transformer
 from singer.utils import strptime_to_utc, strftime, now
+from singer import utils
 
 from tap_shiphero.discover import PKS
 
@@ -117,8 +118,11 @@ def sync_vendors(client, catalog, state, start_date, end_date, stream_id, stream
 
     persist_records(catalog, stream_id, records)
 
-def sync_a_day(stream_id, path, params, start_ymd, end_ymd, func_get_records, client, catalog):
-    """
+def sync_a_day(stream_id, path, params, start_ymd, end_ymd,
+               func_get_records, client, catalog):
+    """Sync a single day's worth of data, paginating through as many times as
+    necessary.
+
     Loop Guide
     1. Make the API call
     2. Process the response to get a list of records
@@ -126,18 +130,17 @@ def sync_a_day(stream_id, path, params, start_ymd, end_ymd, func_get_records, cl
     4. Update the call parameters
     When the conditional becomes invalid log a message that we are done
 
-    The length of the response seems to vary, but once we get back an
-    empty response, it seems that we have requested all objects. Do not
-    trust the `total` field on the response, it has varied from the
-    actual total by O(10).
+    The length of the response can vary, but once we get back an empty
+    response, it seems that we have requested all objects. Do not trust
+    the `total` field on the response, it has varied from the actual total
+    by O(10). The path to that field is response.json()['orders']['total'],
+    where the response is in the request function in `client.py`.
     """
     page = 1
-    params['page'] = page
 
-    # This is a non-empty list to start so we can enter the loop
-    records = ['Initialize records']
-
-    while len(records) > 0:
+    # Page until we're done
+    while True:
+        params['page'] = page
         LOGGER.info('Syncing %s from: %s to: %s - page %s',
                     stream_id,
                     start_ymd,
@@ -145,13 +148,15 @@ def sync_a_day(stream_id, path, params, start_ymd, end_ymd, func_get_records, cl
                     page)
         data = client.get(path, params=params, endpoint=stream_id)
         records = func_get_records(data)
-        persist_records(catalog, stream_id, records)
-
-        page += 1
-        params['page'] = page
-    else:
-        LOGGER.info('Empty response from endpoint %s, '
-                    'aborting further pagination.', stream_id)
+        if not records:
+            LOGGER.info(
+                'Done daily pagination for endpoint %s at page %d',
+                stream_id,
+                page)
+            break
+        else:
+            persist_records(catalog, stream_id, records)
+            page += 1
 
 def sync_daily(client, catalog, state, start_date, end_date, stream_id, stream_config):
     """Syncs a given date range, bookmarking after each day.
@@ -167,41 +172,50 @@ def sync_daily(client, catalog, state, start_date, end_date, stream_id, stream_c
     """
     write_schema(catalog, stream_id)
 
-    # Set up datetime versions of the start_date, end_date
+    #######################################################################
+    ### Set up datetime versions of the start_date, end_date
+    #######################################################################
+
     start_date_dt = strptime_to_utc(get_bookmark(state, stream_id, start_date))
 
     # Since end_date is optional in the top level sync
     if end_date:
         end_date_dt = strptime_to_utc(end_date)
     else:
-        end_date_dt = now()
+        end_date_dt = utils.now()
 
     if start_date_dt > end_date_dt:
         raise Exception('{} start_date is greater than end_date'.format(stream_id))
 
-    # Pull config variables out of stream_config
+    #######################################################################
+    ### Sync data by day
+    #######################################################################
+
+    # Extract params from config
     path = stream_config['path']
     params = stream_config.get('params', {})
+    from_col = stream_config['from_col']
+    to_col = stream_config['to_col']
+    records_fn = stream_config['get_records']
 
-    while start_date_dt < end_date_dt:
+    # Loop over all the days
+    while start_date_dt != end_date_dt:
         window_end = start_date_dt + timedelta(days=1)
+        if window_end > now() or window_end > end_date_dt:
+            window_end = end_date_dt
 
         # The API expects the dates in %Y-%m-%d
         start_ymd = start_date_dt.strftime('%Y-%m-%d')
         end_ymd = window_end.strftime('%Y-%m-%d')
 
-        params.update({stream_config['from_col'] : start_ymd,
-                       stream_config['to_col'] : end_ymd})
+        params.update({from_col: start_ymd,
+                       to_col: end_ymd})
 
         sync_a_day(stream_id, path, params, start_ymd, end_ymd,
-                   stream_config['get_records'], client, catalog)
+                   records_fn, client, catalog)
 
-        date_to_bookmark = window_end
-        if date_to_bookmark > now():
-            date_to_bookmark = now()
-        set_bookmark(state, stream_id, date_to_bookmark.isoformat())
-
-        start_date_dt = date_to_bookmark
+        set_bookmark(state, stream_id, utils.strftime(window_end))
+        start_date_dt = window_end
 
 def order_get_records(data):
     records = data.get('results', [])

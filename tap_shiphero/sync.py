@@ -118,8 +118,14 @@ def sync_vendors(client, catalog, state, start_date, end_date, stream_id, stream
 
     persist_records(catalog, stream_id, records)
 
+def update_page_bookmark(state, page_bookmark_key, page_value):
+    if 'bookmarks' not in state:
+        state['bookmarks'] = {}
+    state['bookmarks'][page_bookmark_key] = page_value
+    singer.write_state(state)
+
 def sync_a_day(stream_id, path, params, start_ymd, end_ymd,
-               func_get_records, client, catalog):
+               func_get_records, client, catalog, state):
     """Sync a single day's worth of data, paginating through as many times as
     necessary.
 
@@ -136,27 +142,32 @@ def sync_a_day(stream_id, path, params, start_ymd, end_ymd,
     by O(10). The path to that field is response.json()['orders']['total'],
     where the response is in the request function in `client.py`.
     """
-    page = 1
+    page_bookmark_key = stream_id + '_page'
 
     # Page until we're done
     while True:
-        params['page'] = page
         LOGGER.info('Syncing %s from: %s to: %s - page %s',
                     stream_id,
                     start_ymd,
                     end_ymd,
-                    page)
+                    params['page'])
         data = client.get(path, params=params, endpoint=stream_id)
         records = func_get_records(data)
         if not records:
             LOGGER.info(
                 'Done daily pagination for endpoint %s at page %d',
                 stream_id,
-                page)
+                params['page'])
             break
         else:
             persist_records(catalog, stream_id, records)
-            page += 1
+            if params['page'] % 10 == 0:
+                update_page_bookmark(state, page_bookmark_key, params['page'])
+            params['page'] += 1
+
+def get_page_bookmark(state, stream_id):
+    bookmark_key = stream_id + '_page'
+    return state.get('bookmarks', {}).get(bookmark_key, 1)
 
 def sync_daily(client, catalog, state, start_date, end_date, stream_id, stream_config):
     """Syncs a given date range, bookmarking after each day.
@@ -198,6 +209,9 @@ def sync_daily(client, catalog, state, start_date, end_date, stream_id, stream_c
     to_col = stream_config['to_col']
     records_fn = stream_config['get_records']
 
+    # Set the page to start paginating on
+    params['page'] = get_page_bookmark(state, stream_id)
+
     # Loop over all the days
     while start_date_dt != end_date_dt:
         window_end = start_date_dt + timedelta(days=1)
@@ -212,7 +226,7 @@ def sync_daily(client, catalog, state, start_date, end_date, stream_id, stream_c
                        to_col: end_ymd})
 
         sync_a_day(stream_id, path, params, start_ymd, end_ymd,
-                   records_fn, client, catalog)
+                   records_fn, client, catalog, state)
 
         set_bookmark(state, stream_id, utils.strftime(window_end))
         start_date_dt = window_end

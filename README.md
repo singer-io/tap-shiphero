@@ -1,6 +1,4 @@
 # tap-shiphero
-
-# tap-shiphero
 This is a Singer tap that produces JSON-formatted data following the Singer
 spec. It pulls raw data from the ShipHero API, extracting:
 - Orders

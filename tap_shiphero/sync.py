@@ -38,10 +38,34 @@ def get_bookmark(state, stream_id, default):
         .get(stream_id, default)
     )
 
-def set_bookmark(state, stream_id, value):
+def set_bookmark(state, stream_id, field, value):
+    """Structure of the state dictionary:
+    {
+      "bookmarks": {
+        "stream1" : {
+          "datetime": "2019-01-01T00:00:00Z",
+          "page": 75
+        },
+        "stream2" : {
+          "datetime": "2019-01-01T00:00:00Z",
+          "page": 75
+        },
+        ...
+      }
+      ...
+    }
+    """
     if 'bookmarks' not in state:
         state['bookmarks'] = {}
-    state['bookmarks'][stream_id] = value
+
+    # This is the old style, so convert it to a dict
+    if isinstance(state['bookmarks'][stream_id], string):
+        state['bookmarks'][stream_id] = {}
+
+    if not isinstance(state['bookmarks'][stream_id], dict):
+        raise Exception('Unexpected bookmark format')
+
+    state['bookmarks'][stream_id][field] = value
     singer.write_state(state)
 
 def get_selected_streams(catalog):
@@ -101,7 +125,7 @@ def sync_products(client, catalog, state, start_date, end_date, stream_id, strea
         else:
             num_results = 0
 
-        set_bookmark(state, stream_id, max_datetime)
+        set_bookmark(state, stream_id, 'datetime', max_datetime)
 
 def sync_vendors(client, catalog, state, start_date, end_date, stream_id, stream_config):
     stream_id = 'vendors'
@@ -117,12 +141,6 @@ def sync_vendors(client, catalog, state, start_date, end_date, stream_id, stream
     records = data['vendors']
 
     persist_records(catalog, stream_id, records)
-
-def update_page_bookmark(state, page_bookmark_key, page_value):
-    if 'bookmarks' not in state:
-        state['bookmarks'] = {}
-    state['bookmarks'][page_bookmark_key] = page_value
-    singer.write_state(state)
 
 def sync_a_day(stream_id, path, params, start_ymd, end_ymd,
                func_get_records, client, catalog, state):
@@ -161,7 +179,7 @@ def sync_a_day(stream_id, path, params, start_ymd, end_ymd,
             break
         else:
             persist_records(catalog, stream_id, records)
-            update_page_bookmark(state, page_bookmark_key, params['page'])
+            set_bookmark(state, stream_id, 'page', params['page'])
             params['page'] += 1
 
 def get_page_bookmark(state, stream_id):
@@ -227,7 +245,7 @@ def sync_daily(client, catalog, state, start_date, end_date, stream_id, stream_c
         sync_a_day(stream_id, path, params, start_ymd, end_ymd,
                    records_fn, client, catalog, state)
 
-        set_bookmark(state, stream_id, utils.strftime(window_end))
+        set_bookmark(state, stream_id, 'datetime', utils.strftime(window_end))
         start_date_dt = window_end
 
 def order_get_records(data):

@@ -49,8 +49,6 @@ def sync_products(client, catalog, state, start_date, end_date, stream_id, strea
 
     write_schema(catalog, stream_id)
 
-    last_date = bookmarks.get_bookmark(state, stream_id, 'datetime', start_date)
-
     # Rip this out once all bookmarks are converted
     if isinstance(state.get('bookmarks',{}).get(stream_id), str):
         # Old style bookmark found. Use it and delete it
@@ -58,6 +56,9 @@ def sync_products(client, catalog, state, start_date, end_date, stream_id, strea
 
         # Write this bookmark in the new style
         bookmarks.write_bookmark(state, stream_id, 'datetime', last_date)
+        singer.write_state(state)
+
+    last_date = bookmarks.get_bookmark(state, stream_id, 'datetime', start_date)
 
     def products_transform(record):
         out = {}
@@ -98,6 +99,7 @@ def sync_products(client, catalog, state, start_date, end_date, stream_id, strea
             num_results = 0
 
         bookmarks.write_bookmark(state, stream_id, 'datetime', max_datetime)
+        singer.write_state(state)
 
 def sync_vendors(client, catalog, state, start_date, end_date, stream_id, stream_config):
     stream_id = 'vendors'
@@ -124,16 +126,23 @@ def sync_a_day(stream_id, path, params, start_ymd, end_ymd,
     2. Process the response to get a list of records
     3. Persist the records
     4. Update the call parameters
-    When the conditional becomes invalid log a message that we are done
+
+    When we get back an empty result set, log a message that we are done,
+    reset the page bookmark to page 1, and update the datetime bookmark to
+    the day we just finished syncing.
 
     The length of the response can vary, but once we get back an empty
     response, it seems that we have requested all objects. Do not trust
     the `total` field on the response, it has varied from the actual total
     by O(10). The path to that field is response.json()['orders']['total'],
     where the response is in the request function in `client.py`.
+
     """
     # Page until we're done
     while True:
+        page_bookmark = bookmarks.get_bookmark(state, stream_id, 'page', 1)
+        # Set the page to start paginating on
+        params['page'] = page_bookmark
         LOGGER.info('Syncing %s from: %s to: %s - page %s',
                     stream_id,
                     start_ymd,
@@ -146,11 +155,14 @@ def sync_a_day(stream_id, path, params, start_ymd, end_ymd,
                 'Done daily pagination for endpoint %s at page %d',
                 stream_id,
                 params['page'])
+            bookmarks.write_bookmark(state, stream_id, 'page', 1)
+            bookmarks.write_bookmark(state, stream_id, 'datetime', utils.strftime(end_ymd))
+            singer.write_state(state)
             break
         else:
             persist_records(catalog, stream_id, records)
-            bookmarks.write_bookmark(state, stream_id, 'page', params['page'])
-            params['page'] += 1
+            singer.write_state(state)
+            bookmarks.write_bookmark(state, stream_id, 'page', params['page'] + 1)
 
 def sync_daily(client, catalog, state, start_date, end_date, stream_id, stream_config):
     """Syncs a given date range, bookmarking after each day.
@@ -208,9 +220,7 @@ def sync_daily(client, catalog, state, start_date, end_date, stream_id, stream_c
     to_col = stream_config['to_col']
     records_fn = stream_config['get_records']
 
-    page_bookmark = bookmarks.get_bookmark(state, stream_id, 'page')
-    if not page_bookmark:
-        page_bookmark = 1
+    page_bookmark = bookmarks.get_bookmark(state, stream_id, 'page', 1)
 
     # Set the page to start paginating on
     params['page'] = page_bookmark
@@ -231,8 +241,6 @@ def sync_daily(client, catalog, state, start_date, end_date, stream_id, stream_c
         sync_a_day(stream_id, path, params, start_ymd, end_ymd,
                    records_fn, client, catalog, state)
 
-        bookmarks.write_bookmark(state, stream_id, 'datetime', utils.strftime(window_end))
-        bookmarks.write_bookmark(state, stream_id, 'page', 1)
         start_date_dt = window_end
 
 def order_get_records(data):

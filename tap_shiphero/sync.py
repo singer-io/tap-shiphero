@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import singer
 from singer import metrics, metadata, Transformer
 from singer.utils import strptime_to_utc, strftime, now
+from singer import bookmarks
 from singer import utils
 
 from tap_shiphero.discover import PKS
@@ -30,19 +31,6 @@ def persist_records(catalog, stream_id, records):
                                                    stream_metadata)
                 singer.write_record(stream_id, record)
                 counter.increment()
-
-def get_bookmark(state, stream_id, field, default):
-    """This function will return:
-    - state[bookmarks][stream_id] **Deprecated**
-    - state[bookmarks][stream_id][field]
-    - `default`
-    """
-    the_bookmark = state.get('bookmarks', {}).get(stream_id, default)
-
-    if isinstance(the_bookmark, string):
-        return the_bookmark
-    elif isinstance(the_bookmark, dict):
-        return the_bookmark.get(field, default)
 
 def set_bookmark(state, stream_id, field, value):
     """Structure of the state dictionary:
@@ -91,7 +79,23 @@ def sync_products(client, catalog, state, start_date, end_date, stream_id, strea
 
     write_schema(catalog, stream_id)
 
-    last_date = get_bookmark(state, stream_id, 'datetime', start_date)
+    last_date = bookmarks.get_bookmark(state, stream_id, 'datetime')
+
+    if not last_date:
+        # Default to start_date
+        last_date = start_date
+
+        # Rip this out once all bookmarks are converted
+        old_style_bookmark = bookmarks.get_bookmark(state, stream_id, stream_id)
+        if old_style_bookmark:
+            # Use the old style bookmark
+            last_date = old_style_bookmark
+
+            # Write this bookmark in the new style
+            bookmarks.write_bookmark(state, stream_id, 'datetime', last_date)
+
+            # Purge the old style bookmark
+            bookmarks.clear_bookmark(state, stream_id, stream_id)
 
     def products_transform(record):
         out = {}
@@ -204,8 +208,26 @@ def sync_daily(client, catalog, state, start_date, end_date, stream_id, stream_c
     ### Set up datetime versions of the start_date, end_date
     #######################################################################
 
-    start_date_dt = strptime_to_utc(get_bookmark(state, stream_id,
-                                                 'datetime', start_date))
+    start_date_bookmark = bookmarks.get_bookmark(state, stream_id, 'datetime')
+    if not start_date_bookmark:
+        # Default to start_date
+        start_date_bookmark = start_date
+
+        # Rip this out once all bookmarks are converted
+        old_style_bookmark = bookmarks.get_bookmark(state, stream_id, stream_id)
+        if old_style_bookmark:
+            start_date_bookmark = old_style_bookmark
+
+            # Write this bookmark in the new style
+            bookmarks.write_bookmark(state,
+                                     stream_id,
+                                     'datetime',
+                                     start_date_bookmark)
+
+            # Purge the old style bookmark
+            bookmarks.clear_bookmark(state, stream_id, stream_id)
+
+    start_date_dt = strptime_to_utc(start_date_bookmark)
 
     # Since end_date is optional in the top level sync
     if end_date:
@@ -227,8 +249,12 @@ def sync_daily(client, catalog, state, start_date, end_date, stream_id, stream_c
     to_col = stream_config['to_col']
     records_fn = stream_config['get_records']
 
+    page_bookmark = bookmarks.get_bookmark(state, stream_id, 'page')
+    if not page_bookmark:
+        page_bookmark = 1
+
     # Set the page to start paginating on
-    params['page'] = get_bookmark(state, stream_id, 'page', 1)
+    params['page'] = page_bookmark
 
     # Loop over all the days
     while start_date_dt != end_date_dt:

@@ -43,6 +43,7 @@ class ShipHeroClient(object):
         if 'headers' not in kwargs:
             kwargs['headers'] = {}
         kwargs['headers']['x-api-key'] = self.__token
+        kwargs['headers']['Accept'] = 'application/json'
 
         if self.__user_agent:
             kwargs['headers']['User-Agent'] = self.__user_agent

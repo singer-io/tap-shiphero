@@ -31,12 +31,18 @@ def persist_records(catalog, stream_id, records):
                 singer.write_record(stream_id, record)
                 counter.increment()
 
-def get_bookmark(state, stream_id, default):
-    return (
-        state
-        .get('bookmarks', {})
-        .get(stream_id, default)
-    )
+def get_bookmark(state, stream_id, field, default):
+    """This function will return:
+    - state[bookmarks][stream_id] **Deprecated**
+    - state[bookmarks][stream_id][field]
+    - `default`
+    """
+    the_bookmark = state.get('bookmarks', {}).get(stream_id, default)
+
+    if isinstance(the_bookmark, string):
+        return the_bookmark
+    elif isinstance(the_bookmark, dict):
+        return the_bookmark.get(field, default)
 
 def set_bookmark(state, stream_id, field, value):
     """Structure of the state dictionary:
@@ -85,7 +91,7 @@ def sync_products(client, catalog, state, start_date, end_date, stream_id, strea
 
     write_schema(catalog, stream_id)
 
-    last_date = get_bookmark(state, stream_id, start_date)
+    last_date = get_bookmark(state, stream_id, 'datetime', start_date)
 
     def products_transform(record):
         out = {}
@@ -160,8 +166,6 @@ def sync_a_day(stream_id, path, params, start_ymd, end_ymd,
     by O(10). The path to that field is response.json()['orders']['total'],
     where the response is in the request function in `client.py`.
     """
-    page_bookmark_key = stream_id + '_page'
-
     # Page until we're done
     while True:
         LOGGER.info('Syncing %s from: %s to: %s - page %s',
@@ -182,10 +186,6 @@ def sync_a_day(stream_id, path, params, start_ymd, end_ymd,
             set_bookmark(state, stream_id, 'page', params['page'])
             params['page'] += 1
 
-def get_page_bookmark(state, stream_id):
-    bookmark_key = stream_id + '_page'
-    return state.get('bookmarks', {}).get(bookmark_key, 1)
-
 def sync_daily(client, catalog, state, start_date, end_date, stream_id, stream_config):
     """Syncs a given date range, bookmarking after each day.
 
@@ -204,7 +204,8 @@ def sync_daily(client, catalog, state, start_date, end_date, stream_id, stream_c
     ### Set up datetime versions of the start_date, end_date
     #######################################################################
 
-    start_date_dt = strptime_to_utc(get_bookmark(state, stream_id, start_date))
+    start_date_dt = strptime_to_utc(get_bookmark(state, stream_id,
+                                                 'datetime', start_date))
 
     # Since end_date is optional in the top level sync
     if end_date:
@@ -227,7 +228,7 @@ def sync_daily(client, catalog, state, start_date, end_date, stream_id, stream_c
     records_fn = stream_config['get_records']
 
     # Set the page to start paginating on
-    params['page'] = get_page_bookmark(state, stream_id)
+    params['page'] = get_bookmark(state, stream_id, 'page', 1)
 
     # Loop over all the days
     while start_date_dt != end_date_dt:

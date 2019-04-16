@@ -32,36 +32,6 @@ def persist_records(catalog, stream_id, records):
                 singer.write_record(stream_id, record)
                 counter.increment()
 
-def set_bookmark(state, stream_id, field, value):
-    """Structure of the state dictionary:
-    {
-      "bookmarks": {
-        "stream1" : {
-          "datetime": "2019-01-01T00:00:00Z",
-          "page": 75
-        },
-        "stream2" : {
-          "datetime": "2019-01-01T00:00:00Z",
-          "page": 75
-        },
-        ...
-      }
-      ...
-    }
-    """
-    if 'bookmarks' not in state:
-        state['bookmarks'] = {}
-
-    # This is the old style, so convert it to a dict
-    if isinstance(state['bookmarks'][stream_id], string):
-        state['bookmarks'][stream_id] = {}
-
-    if not isinstance(state['bookmarks'][stream_id], dict):
-        raise Exception('Unexpected bookmark format')
-
-    state['bookmarks'][stream_id][field] = value
-    singer.write_state(state)
-
 def get_selected_streams(catalog):
     selected_streams = set()
     for stream in catalog.streams:

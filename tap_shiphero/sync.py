@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 import singer
 from singer import metrics, metadata, Transformer
-from singer.utils import strptime_to_utc, strftime, now
+from singer.utils import strptime_to_utc, strftime
 from singer import utils
 
 from tap_shiphero.discover import PKS
@@ -201,7 +201,7 @@ def sync_daily(client, catalog, state, start_date, end_date, stream_id, stream_c
     # Loop over all the days
     while start_date_dt != end_date_dt:
         window_end = start_date_dt + timedelta(days=1)
-        if window_end > now() or window_end > end_date_dt:
+        if window_end > utils.now() or window_end > end_date_dt:
             window_end = end_date_dt
 
         # The API expects the dates in %Y-%m-%d

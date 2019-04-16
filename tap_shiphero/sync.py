@@ -161,8 +161,7 @@ def sync_a_day(stream_id, path, params, start_ymd, end_ymd,
             break
         else:
             persist_records(catalog, stream_id, records)
-            if params['page'] % 10 == 0:
-                update_page_bookmark(state, page_bookmark_key, params['page'])
+            update_page_bookmark(state, page_bookmark_key, params['page'])
             params['page'] += 1
 
 def get_page_bookmark(state, stream_id):

@@ -131,7 +131,7 @@ def sync_products(client, catalog, state, start_date, end_date, stream_id, strea
         else:
             num_results = 0
 
-        set_bookmark(state, stream_id, 'datetime', max_datetime)
+        bookmarks.write_bookmark(state, stream_id, 'datetime', max_datetime)
 
 def sync_vendors(client, catalog, state, start_date, end_date, stream_id, stream_config):
     stream_id = 'vendors'
@@ -183,7 +183,7 @@ def sync_a_day(stream_id, path, params, start_ymd, end_ymd,
             break
         else:
             persist_records(catalog, stream_id, records)
-            set_bookmark(state, stream_id, 'page', params['page'])
+            bookmarks.write_bookmark(state, stream_id, 'page', params['page'])
             params['page'] += 1
 
 def sync_daily(client, catalog, state, start_date, end_date, stream_id, stream_config):
@@ -270,7 +270,8 @@ def sync_daily(client, catalog, state, start_date, end_date, stream_id, stream_c
         sync_a_day(stream_id, path, params, start_ymd, end_ymd,
                    records_fn, client, catalog, state)
 
-        set_bookmark(state, stream_id, 'datetime', utils.strftime(window_end))
+        bookmarks.write_bookmark(state, stream_id, 'datetime', utils.strftime(window_end))
+        bookmarks.write_bookmark(state, stream_id, 'page', 1)
         start_date_dt = window_end
 
 def order_get_records(data):

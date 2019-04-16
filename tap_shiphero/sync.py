@@ -52,7 +52,7 @@ def sync_products(client, catalog, state, start_date, end_date, stream_id, strea
     # Rip this out once all bookmarks are converted
     if isinstance(state.get('bookmarks',{}).get(stream_id), str):
         # Old style bookmark found. Use it and delete it
-        last_date = state['bookmarks'][stream_id].pop()
+        last_date = state['bookmarks'].pop(stream_id)
 
         # Write this bookmark in the new style
         bookmarks.write_bookmark(state, stream_id, 'datetime', last_date)
@@ -185,7 +185,7 @@ def sync_daily(client, catalog, state, start_date, end_date, stream_id, stream_c
     # Rip this out once all bookmarks are converted
     if isinstance(state.get('bookmarks',{}).get(stream_id), str):
         # Old style bookmark found. Use it and delete it
-        old_style_bookmark = state['bookmarks'][stream_id].pop()
+        old_style_bookmark = state['bookmarks'].pop(stream_id)
 
         # Write this bookmark in the new style
         bookmarks.write_bookmark(state,

@@ -117,7 +117,7 @@ def sync_vendors(client, catalog, state, start_date, end_date, stream_id, stream
     persist_records(catalog, stream_id, records)
 
 def sync_a_day(stream_id, path, params, start_ymd, end_ymd,
-               func_get_records, client, catalog, state):
+               func_get_records, client, catalog, state, window_end):
     """Sync a single day's worth of data, paginating through as many times as
     necessary.
 
@@ -156,7 +156,7 @@ def sync_a_day(stream_id, path, params, start_ymd, end_ymd,
                 stream_id,
                 params['page'])
             bookmarks.write_bookmark(state, stream_id, 'page', 1)
-            bookmarks.write_bookmark(state, stream_id, 'datetime', utils.strftime(end_ymd))
+            bookmarks.write_bookmark(state, stream_id, 'datetime', utils.strftime(window_end))
             singer.write_state(state)
             break
         else:
@@ -239,7 +239,7 @@ def sync_daily(client, catalog, state, start_date, end_date, stream_id, stream_c
                        to_col: end_ymd})
 
         sync_a_day(stream_id, path, params, start_ymd, end_ymd,
-                   records_fn, client, catalog, state)
+                   records_fn, client, catalog, state, window_end)
 
         start_date_dt = window_end
 

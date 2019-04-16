@@ -182,11 +182,6 @@ def sync_daily(client, catalog, state, start_date, end_date, stream_id, stream_c
     ### Set up datetime versions of the start_date, end_date
     #######################################################################
 
-    start_date_bookmark = bookmarks.get_bookmark(state,
-                                                 stream_id,
-                                                 'datetime',
-                                                 start_date)
-
     # Rip this out once all bookmarks are converted
     if isinstance(state.get('bookmarks',{}).get(stream_id), str):
         # Old style bookmark found. Use it and delete it
@@ -196,7 +191,12 @@ def sync_daily(client, catalog, state, start_date, end_date, stream_id, stream_c
         bookmarks.write_bookmark(state,
                                  stream_id,
                                  'datetime',
-                                 start_date_bookmark)
+                                 old_style_bookmark)
+
+    start_date_bookmark = bookmarks.get_bookmark(state,
+                                                 stream_id,
+                                                 'datetime',
+                                                 start_date)
 
     start_date_dt = strptime_to_utc(start_date_bookmark)
 

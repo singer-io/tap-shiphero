@@ -52,16 +52,12 @@ def sync_products(client, catalog, state, start_date, end_date, stream_id, strea
     last_date = bookmarks.get_bookmark(state, stream_id, 'datetime', start_date)
 
     # Rip this out once all bookmarks are converted
-    old_style_bookmark = bookmarks.get_bookmark(state, stream_id, stream_id)
-    if old_style_bookmark:
-        # Use the old style bookmark
-        last_date = old_style_bookmark
+    if isinstance(state.get('bookmarks',{}).get(stream_id), str):
+        # Old style bookmark found. Use it and delete it
+        last_date = state['bookmarks'][stream_id].pop()
 
         # Write this bookmark in the new style
         bookmarks.write_bookmark(state, stream_id, 'datetime', last_date)
-
-        # Purge the old style bookmark
-        bookmarks.clear_bookmark(state, stream_id, stream_id)
 
     def products_transform(record):
         out = {}
@@ -180,20 +176,15 @@ def sync_daily(client, catalog, state, start_date, end_date, stream_id, stream_c
                                                  start_date)
 
     # Rip this out once all bookmarks are converted
-    old_style_bookmark = bookmarks.get_bookmark(state,
-                                                stream_id,
-                                                stream_id)
-    if old_style_bookmark:
-        start_date_bookmark = old_style_bookmark
+    if isinstance(state.get('bookmarks',{}).get(stream_id), str):
+        # Old style bookmark found. Use it and delete it
+        old_style_bookmark = state['bookmarks'][stream_id].pop()
 
         # Write this bookmark in the new style
         bookmarks.write_bookmark(state,
                                  stream_id,
                                  'datetime',
                                  start_date_bookmark)
-
-        # Purge the old style bookmark
-        bookmarks.clear_bookmark(state, stream_id, stream_id)
 
     start_date_dt = strptime_to_utc(start_date_bookmark)
 

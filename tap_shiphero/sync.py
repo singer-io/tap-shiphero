@@ -79,23 +79,19 @@ def sync_products(client, catalog, state, start_date, end_date, stream_id, strea
 
     write_schema(catalog, stream_id)
 
-    last_date = bookmarks.get_bookmark(state, stream_id, 'datetime')
+    last_date = bookmarks.get_bookmark(state, stream_id, 'datetime', start_date)
 
-    if not last_date:
-        # Default to start_date
-        last_date = start_date
+    # Rip this out once all bookmarks are converted
+    old_style_bookmark = bookmarks.get_bookmark(state, stream_id, stream_id)
+    if old_style_bookmark:
+        # Use the old style bookmark
+        last_date = old_style_bookmark
 
-        # Rip this out once all bookmarks are converted
-        old_style_bookmark = bookmarks.get_bookmark(state, stream_id, stream_id)
-        if old_style_bookmark:
-            # Use the old style bookmark
-            last_date = old_style_bookmark
+        # Write this bookmark in the new style
+        bookmarks.write_bookmark(state, stream_id, 'datetime', last_date)
 
-            # Write this bookmark in the new style
-            bookmarks.write_bookmark(state, stream_id, 'datetime', last_date)
-
-            # Purge the old style bookmark
-            bookmarks.clear_bookmark(state, stream_id, stream_id)
+        # Purge the old style bookmark
+        bookmarks.clear_bookmark(state, stream_id, stream_id)
 
     def products_transform(record):
         out = {}
@@ -208,24 +204,26 @@ def sync_daily(client, catalog, state, start_date, end_date, stream_id, stream_c
     ### Set up datetime versions of the start_date, end_date
     #######################################################################
 
-    start_date_bookmark = bookmarks.get_bookmark(state, stream_id, 'datetime')
-    if not start_date_bookmark:
-        # Default to start_date
-        start_date_bookmark = start_date
+    start_date_bookmark = bookmarks.get_bookmark(state,
+                                                 stream_id,
+                                                 'datetime',
+                                                 start_date)
 
-        # Rip this out once all bookmarks are converted
-        old_style_bookmark = bookmarks.get_bookmark(state, stream_id, stream_id)
-        if old_style_bookmark:
-            start_date_bookmark = old_style_bookmark
+    # Rip this out once all bookmarks are converted
+    old_style_bookmark = bookmarks.get_bookmark(state,
+                                                stream_id,
+                                                stream_id)
+    if old_style_bookmark:
+        start_date_bookmark = old_style_bookmark
 
-            # Write this bookmark in the new style
-            bookmarks.write_bookmark(state,
-                                     stream_id,
-                                     'datetime',
-                                     start_date_bookmark)
+        # Write this bookmark in the new style
+        bookmarks.write_bookmark(state,
+                                 stream_id,
+                                 'datetime',
+                                 start_date_bookmark)
 
-            # Purge the old style bookmark
-            bookmarks.clear_bookmark(state, stream_id, stream_id)
+        # Purge the old style bookmark
+        bookmarks.clear_bookmark(state, stream_id, stream_id)
 
     start_date_dt = strptime_to_utc(start_date_bookmark)
 

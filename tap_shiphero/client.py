@@ -2,9 +2,12 @@ from datetime import datetime, timedelta
 
 import backoff
 import requests
+import singer
 from requests import exceptions
 from singer import metrics
 from ratelimit import limits, RateLimitException, sleep_and_retry
+import simplejson
+LOGGER = singer.get_logger()
 
 class Server5xxError(Exception):
     pass
@@ -28,7 +31,8 @@ class ShipHeroClient(object):
                            RateLimitException,
                            exceptions.Timeout,
                            exceptions.ConnectionError,
-                           exceptions.ChunkedEncodingError),
+                           exceptions.ChunkedEncodingError,
+                           simplejson.scanner.JSONDecodeError),
                           max_tries=5,
                           factor=2)
     @sleep_and_retry
@@ -63,7 +67,15 @@ class ShipHeroClient(object):
 
         response.raise_for_status()
 
-        return response.json()
+        try:
+            return response.json()
+        except:
+            LOGGER.info('response.headers["content-type"]: ', response.headers['content-type'])
+
+            # This raise lets the backoff retry to kick in
+            raise
+
+
 
     def get(self, path, **kwargs):
         return self.request('GET', path, **kwargs)

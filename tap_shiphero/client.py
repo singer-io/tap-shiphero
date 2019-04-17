@@ -70,13 +70,7 @@ class ShipHeroClient(object):
         try:
             return response.json()
         except:
-            LOGGER.info('----------------------------------------')
-            # I want as much information here as possible, but I really
-            # only care about the `content-type` here
-            LOGGER.info('response.headers: ', response.headers)
-            # Here I want to see what is coming back
-            LOGGER.info('response.content: ', response.content)
-            LOGGER.info('----------------------------------------')
+            LOGGER.info('response.headers["content-type"]: ', response.headers['content-type'])
 
             # This raise lets the backoff retry to kick in
             raise

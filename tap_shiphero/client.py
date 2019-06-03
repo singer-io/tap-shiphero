@@ -64,6 +64,9 @@ class ShipHeroClient(object):
 
         if response.status_code >= 500:
             raise Server5xxError()
+        elif response.status_code == 429:
+            raise RateLimitException('Rate limit exceeded', 1)
+
 
         response.raise_for_status()
 

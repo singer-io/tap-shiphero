@@ -204,7 +204,7 @@ def sync_daily(client, catalog, state, start_date, end_date, stream_id, stream_c
     if end_date:
         end_date_dt = strptime_to_utc(end_date)
     else:
-        end_date_dt = utils.now() + timedelta(days=1)
+        end_date_dt = utils.now()
 
     if start_date_dt > end_date_dt:
         raise Exception('{} start_date is greater than end_date'.format(stream_id))
@@ -234,6 +234,9 @@ def sync_daily(client, catalog, state, start_date, end_date, stream_id, stream_c
         # The API expects the dates in %Y-%m-%d
         start_ymd = start_date_dt.strftime('%Y-%m-%d')
         end_ymd = window_end.strftime('%Y-%m-%d')
+        if start_ymd == end_ymd:
+            # NB: A range of 0 days will return 0 records.
+            end_ymd = (utils.strptime_to_utc(end_ymd) + timedelta(days=1)).strftime('%Y-%m-%d')
 
         params.update({from_col: start_ymd,
                        to_col: end_ymd})

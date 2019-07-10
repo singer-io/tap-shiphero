@@ -204,7 +204,7 @@ def sync_daily(client, catalog, state, start_date, end_date, stream_id, stream_c
     if end_date:
         end_date_dt = strptime_to_utc(end_date)
     else:
-        end_date_dt = utils.now()
+        end_date_dt = utils.now() + timedelta(days=1)
 
     if start_date_dt > end_date_dt:
         raise Exception('{} start_date is greater than end_date'.format(stream_id))

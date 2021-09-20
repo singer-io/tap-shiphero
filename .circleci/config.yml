@@ -1,0 +1,38 @@
+version: 2.1
+
+executors:
+  docker-executor:
+    docker:
+      - image: 218546966473.dkr.ecr.us-east-1.amazonaws.com/circle-ci:stitch-tap-tester
+
+workflows:
+  version: 2
+  commit:
+    jobs:
+      - ensure_env
+      - fake_test
+      - fake_deploy:
+          filters:
+            branches:
+              only: master
+
+jobs:
+  ensure_env:
+    steps:
+      - checkout
+      - run:
+          name: 'Setup Virtual Env'
+          command: |
+            python3 -m venv /usr/local/share/virtualenvs/tap-shiphero
+            source /usr/local/share/virtualenvs/tap-shiphero/bin/activate
+            pip install -U pip setuptools
+            pip install .[test]
+  fake_test:
+    steps:
+      - run: echo "Test succeeded"
+  fake_deploy:
+    steps:
+      - run: echo "git tag"
+      - run: echo "python setup.py sdist"
+      - run: echo "twine upload"
+      - run: echo "Deploy succeeded"

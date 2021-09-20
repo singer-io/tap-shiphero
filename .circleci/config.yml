@@ -8,6 +8,7 @@ executors:
 workflows:
   version: 2
   commit:
+    executor: docker-executor
     jobs:
       - ensure_env
       - fake_test

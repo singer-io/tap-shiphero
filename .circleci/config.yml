@@ -13,8 +13,12 @@ workflows:
           context: circleci-user
       - fake_test:
           context: circleci-user
+          requires:
+            - ensure_env
       - fake_deploy:
           context: circleci-user
+          requires:
+            - ensure_env
           filters:
             branches:
               only: master
@@ -31,6 +35,10 @@ jobs:
             source /usr/local/share/virtualenvs/tap-shiphero/bin/activate
             pip install -U pip setuptools
             pip install .[test]
+      - persist_to_workspace:
+          root: /usr/local/share/virtualenvs
+          paths:
+            - tap-shiphero
   fake_test:
     executor: docker-executor
     steps:
@@ -38,7 +46,18 @@ jobs:
   fake_deploy:
     executor: docker-executor
     steps:
-      - run: echo "git tag"
-      - run: echo "python setup.py sdist"
-      - run: echo "twine upload"
-      - run: echo "Deploy succeeded"
+      - checkout
+      - run: python3 -m venv /usr/local/share/virtualenvs/tap-shiphero
+      - run: source /usr/local/share/virtualenvs/tap-shiphero/bin/activate
+      - run:
+          name: 'Create git tag'
+          command: |
+            version=$(python setup.py --version)
+            git tag -a v"${version}" -m "version ${version}"
+            git push --tags
+      - run:
+          name: 'Build and Upload'
+          command: |
+            pip install twine
+            python setup.py sdist --dist-dir dist
+            twine upload --repository testpypi --username $PYPI_USERNAME --password $PYPI_PASSWORD ./dist/*

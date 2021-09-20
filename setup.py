@@ -17,6 +17,14 @@ setup(
         'requests==2.20.1',
         'singer-python==5.5.0'
     ],
+    extras_require={
+        'dev': [
+            'ipdb',
+        ],
+        'test': [
+            'pytest',
+        ]
+    },
     entry_points='''
       [console_scripts]
       tap-shiphero=tap_shiphero:main

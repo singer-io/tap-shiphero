@@ -8,7 +8,6 @@ executors:
 workflows:
   version: 2
   commit:
-    executor: docker-executor
     jobs:
       - ensure_env
       - fake_test
@@ -19,6 +18,7 @@ workflows:
 
 jobs:
   ensure_env:
+    executor: docker-executor
     steps:
       - checkout
       - run:
@@ -29,9 +29,11 @@ jobs:
             pip install -U pip setuptools
             pip install .[test]
   fake_test:
+    executor: docker-executor
     steps:
       - run: echo "Test succeeded"
   fake_deploy:
+    executor: docker-executor
     steps:
       - run: echo "git tag"
       - run: echo "python setup.py sdist"

@@ -9,9 +9,12 @@ workflows:
   version: 2
   commit:
     jobs:
-      - ensure_env
-      - fake_test
+      - ensure_env:
+          context: circleci-user
+      - fake_test:
+          context: circleci-user
       - fake_deploy:
+          context: circleci-user
           filters:
             branches:
               only: master

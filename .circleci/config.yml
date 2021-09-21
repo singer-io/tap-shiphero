@@ -28,6 +28,9 @@ workflows:
             - fake_test
 
 jobs:
+  build:
+    executor: docker-executor
+    - run: echo 'CI done'
   ensure_env:
     executor: docker-executor
     steps:

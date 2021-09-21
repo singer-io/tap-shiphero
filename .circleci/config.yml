@@ -22,8 +22,17 @@ workflows:
           filters:
             branches:
               only: master
+      - build:
+          context: circleci-user
+          requires:
+            - ensure_env
+            - fake_test
 
 jobs:
+  build:
+    executor: docker-executor
+    steps:
+      - run: echo 'CI done'
   ensure_env:
     executor: docker-executor
     steps:
@@ -53,6 +62,8 @@ jobs:
           name: 'Create git tag'
           command: |
             version=$(python setup.py --version)
+            git config user.email "stitchintegrationdev@talend.com"
+            git config user.name "Stitch IntegrationDev"
             git tag -a v"${version}" -m "version ${version}"
             git push --tags
       - run:

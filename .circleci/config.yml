@@ -53,6 +53,8 @@ jobs:
           name: 'Create git tag'
           command: |
             version=$(python setup.py --version)
+            git config user.email "stitchintegrationdev@talend.com"
+            git config user.name "Stitch IntegrationDev"
             git tag -a v"${version}" -m "version ${version}"
             git push --tags
       - run:

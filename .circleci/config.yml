@@ -23,6 +23,7 @@ workflows:
             branches:
               only: master
       - build:
+          context: circleci-user
           requires:
             - ensure_env
             - fake_test

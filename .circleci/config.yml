@@ -22,6 +22,10 @@ workflows:
           filters:
             branches:
               only: master
+      - build:
+          requires:
+            - ensure_env
+            - fake_test
 
 jobs:
   ensure_env:

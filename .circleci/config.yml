@@ -58,12 +58,15 @@ jobs:
       - checkout
       - run: python3 -m venv /usr/local/share/virtualenvs/tap-shiphero
       - run: source /usr/local/share/virtualenvs/tap-shiphero/bin/activate
+      - add_ssh_keys:
+          fingerprints:
+            - '6a:a5:6c:1a:26:3e:02:ba:3b:cb:6a:af:19:a2:90:52'
       - run:
           name: 'Create git tag'
           command: |
             version=$(python setup.py --version)
             git config user.email "stitchintegrationdev@talend.com"
-            git config user.name "Stitch IntegrationDev"
+            git config user.name "${CIRCLE_USERNAME}"
             git tag -a v"${version}" -m "version ${version}"
             git push --tags
       - run:

@@ -14,7 +14,7 @@ setup(
     install_requires=[
         'backoff==1.3.2',
         'ratelimit==2.2.0',
-        'requests==2.20.1',
+        'requests==2.31.0',
         'singer-python==5.5.0'
     ],
     extras_require={

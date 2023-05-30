@@ -5,7 +5,7 @@ from setuptools import find_packages
 
 setup(
     name='tap-shiphero',
-    version='1.1.9',
+    version='1.1.10',
     description="Singer.io tap for extracting Shiphero data",
     author="Stitch",
     url="http://singer.io",
@@ -14,7 +14,7 @@ setup(
     install_requires=[
         'backoff==1.3.2',
         'ratelimit==2.2.0',
-        'requests==2.20.1',
+        'requests==2.31.0',
         'singer-python==5.5.0'
     ],
     extras_require={
